@@ -1,0 +1,13 @@
+version: "3.3"
+
+services:
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    networks:
+      - previewer-network
+    volumes:
+      - ./../test/data:/static:ro

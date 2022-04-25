@@ -3,3 +3,6 @@
 *.test
 *.out
 *.local
+.vscode/
+*.benchmark
+*.env
