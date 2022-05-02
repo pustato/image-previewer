@@ -17,7 +17,7 @@ type Logger interface {
 	Error(msg string)
 }
 
-func New(level string) (Logger, error) {
+func NewZapLogger(level string) (*ZapLogger, error) {
 	zLevel, err := zap.ParseAtomicLevel(level)
 	if err != nil {
 		return nil, fmt.Errorf("unknown log level %s: %w", level, err)
@@ -37,28 +37,28 @@ func New(level string) (Logger, error) {
 
 	zl, err := config.Build()
 	if err != nil {
-		return nil, fmt.Errorf("build logger: %w", err)
+		return nil, fmt.Errorf("build ZapLogger: %w", err)
 	}
 
-	return &logger{zl}, nil
+	return &ZapLogger{zl}, nil
 }
 
-type logger struct {
+type ZapLogger struct {
 	logger *zap.Logger
 }
 
-func (l *logger) Debug(msg string) {
+func (l *ZapLogger) Debug(msg string) {
 	l.logger.Debug(msg)
 }
 
-func (l *logger) Info(msg string) {
+func (l *ZapLogger) Info(msg string) {
 	l.logger.Info(msg)
 }
 
-func (l *logger) Warn(msg string) {
+func (l *ZapLogger) Warn(msg string) {
 	l.logger.Warn(msg)
 }
 
-func (l *logger) Error(msg string) {
+func (l *ZapLogger) Error(msg string) {
 	l.logger.Error(msg)
 }

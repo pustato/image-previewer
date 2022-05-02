@@ -14,21 +14,21 @@ type App interface {
 	GetAndResize(ctx context.Context, url string, w, h int, headers http.Header) ([]byte, error)
 }
 
-func New(c client.Client, r resizer.Resizer) App {
-	return &app{c, r}
+func NewResizerApp(c client.Client, r resizer.Resizer) *ResizerApp {
+	return &ResizerApp{c, r}
 }
 
-type app struct {
+type ResizerApp struct {
 	client  client.Client
 	resizer resizer.Resizer
 }
 
-func (a *app) GetAndResize(ctx context.Context, url string, w, h int, headers http.Header) ([]byte, error) {
+func (a *ResizerApp) GetAndResize(ctx context.Context, url string, w, h int, headers http.Header) ([]byte, error) {
 	var err error
 
 	rsp, err := a.client.GetWithHeaders(ctx, url, headers)
 	if err != nil {
-		return nil, fmt.Errorf("app get %s: %w", url, err)
+		return nil, fmt.Errorf("ResizerApp get %s: %w", url, err)
 	}
 	defer func() {
 		err = rsp.Body.Close()
@@ -40,7 +40,7 @@ func (a *app) GetAndResize(ctx context.Context, url string, w, h int, headers ht
 
 	result, err := a.resizer.Resize(rsp.Body, w, h)
 	if err != nil {
-		return nil, fmt.Errorf("app resize: %w", err)
+		return nil, fmt.Errorf("ResizerApp resize: %w", err)
 	}
 
 	return result, err

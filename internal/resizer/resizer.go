@@ -8,30 +8,30 @@ import (
 	"github.com/disintegration/imaging"
 )
 
-var _ Resizer = (*resizer)(nil)
+var _ Resizer = (*ImageResizer)(nil)
 
 type Resizer interface {
 	Resize(i io.Reader, w, h int) ([]byte, error)
 }
 
-func New() Resizer {
-	return &resizer{
+func NewImageResizer() *ImageResizer {
+	return &ImageResizer{
 		&imagingProcessor{},
 	}
 }
 
-type resizer struct {
+type ImageResizer struct {
 	processor ImageProcessor
 }
 
-func (r *resizer) WithProcessor(processor ImageProcessor) {
+func (r *ImageResizer) WithProcessor(processor ImageProcessor) {
 	r.processor = processor
 }
 
-func (r *resizer) Resize(reader io.Reader, w, h int) ([]byte, error) {
+func (r *ImageResizer) Resize(reader io.Reader, w, h int) ([]byte, error) {
 	img, err := r.processor.Decode(reader)
 	if err != nil {
-		return nil, fmt.Errorf("resizer decode: %w", err)
+		return nil, fmt.Errorf("ImageResizer decode: %w", err)
 	}
 
 	wi, hi := img.Bounds().Dx(), img.Bounds().Dy()
@@ -55,7 +55,7 @@ func (r *resizer) Resize(reader io.Reader, w, h int) ([]byte, error) {
 
 	buff := new(bytes.Buffer)
 	if err := imaging.Encode(buff, img, imaging.JPEG, imaging.JPEGQuality(80)); err != nil {
-		return nil, fmt.Errorf("resizer encode: %w", err)
+		return nil, fmt.Errorf("ImageResizer encode: %w", err)
 	}
 
 	return buff.Bytes(), nil

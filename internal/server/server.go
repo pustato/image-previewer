@@ -14,7 +14,7 @@ type Server struct {
 	server *http.Server
 }
 
-func New(addr string, app app.App, logg logger.Logger) *Server {
+func NewServer(addr string, app app.App, logg logger.Logger) *Server {
 	return &Server{
 		server: &http.Server{
 			Addr:    addr,

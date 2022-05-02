@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -64,7 +65,21 @@ func parsePath(path string) (*request, error) {
 		return nil, fmt.Errorf("%s: %w", parts[pathPartsHeightIdx], ErrHeightIsNotANumber)
 	}
 
-	url := "http://" + parts[pathPartsURLIdx]
+	u, err := normalizeUrl("http://" + parts[pathPartsURLIdx])
+	if err != nil {
+		return nil, err
+	}
 
-	return &request{w, h, url}, nil
+	return &request{w, h, u}, nil
+}
+
+func normalizeUrl(u string) (string, error) {
+	uu, err := url.Parse(strings.ToLower(u))
+	if err != nil {
+		return "", fmt.Errorf("%s: %w: %s", u, ErrInvalidUrl, err.Error())
+	}
+
+	uu.Fragment = ""
+
+	return uu.String(), nil
 }

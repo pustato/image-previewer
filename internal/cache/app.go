@@ -12,7 +12,7 @@ import (
 	"github.com/pustato/image-previewer/internal/app"
 )
 
-var _ app.App = (*CachedApp)(nil)
+var _ app.App = (*AppCacheDecorator)(nil)
 
 type Item struct {
 	key      string
@@ -34,19 +34,19 @@ type Filesystem interface {
 	RemoveFile(name string) error
 }
 
-type CachedApp struct {
+type AppCacheDecorator struct {
 	app   app.App
 	cache Cache
 	fs    Filesystem
 }
 
-func New(app app.App, limit uint64, cachePath string) (app.App, error) {
+func NewCacheAppDecorator(app app.App, limit uint64, cachePath string) (*AppCacheDecorator, error) {
 	fs, err := NewFilesystem(cachePath)
 	if err != nil {
 		return nil, fmt.Errorf("new cached app: %w", err)
 	}
 
-	return &CachedApp{
+	return &AppCacheDecorator{
 		app: app,
 		cache: NewCache(limit, func(item *Item) {
 			_ = fs.RemoveFile(item.FileName) // log ? todo
@@ -55,8 +55,8 @@ func New(app app.App, limit uint64, cachePath string) (app.App, error) {
 	}, nil
 }
 
-func (a *CachedApp) GetAndResize(ctx context.Context, url string, w, h int, headers http.Header) ([]byte, error) {
-	key := a.cacheKey(url, w, h)
+func (a *AppCacheDecorator) GetAndResize(ctx context.Context, url string, w, h int, headers http.Header) ([]byte, error) {
+	key := a.generateKey(url, w, h)
 
 	item, found := a.cache.Get(key)
 	if found {
@@ -86,7 +86,7 @@ func (a *CachedApp) GetAndResize(ctx context.Context, url string, w, h int, head
 	return content, nil
 }
 
-func (a *CachedApp) cacheKey(url string, w, h int) string {
+func (a *AppCacheDecorator) generateKey(url string, w, h int) string {
 	hash := sha256.New()
 
 	io.WriteString(hash, url)

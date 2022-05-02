@@ -7,28 +7,28 @@ import (
 	"time"
 )
 
-var _ Client = (*client)(nil)
+var _ Client = (*HttpClient)(nil)
 
 type Client interface {
 	GetWithHeaders(ctx context.Context, url string, headers http.Header) (*http.Response, error)
 }
 
-type client struct {
+type HttpClient struct {
 	client *http.Client
 }
 
-func New(timeout time.Duration) Client {
-	return &client{
+func New(timeout time.Duration) *HttpClient {
+	return &HttpClient{
 		client: &http.Client{
 			Timeout: timeout,
 		},
 	}
 }
 
-func (c *client) GetWithHeaders(ctx context.Context, url string, headers http.Header) (*http.Response, error) {
+func (c *HttpClient) GetWithHeaders(ctx context.Context, url string, headers http.Header) (*http.Response, error) {
 	rq, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("client create request: %w", err)
+		return nil, fmt.Errorf("HttpClient create request: %w", err)
 	}
 
 	for key, hh := range headers {
@@ -39,7 +39,7 @@ func (c *client) GetWithHeaders(ctx context.Context, url string, headers http.He
 
 	rsp, err := c.client.Do(rq)
 	if err != nil {
-		return nil, fmt.Errorf("client do request: %w", err)
+		return nil, fmt.Errorf("HttpClient do request: %w", err)
 	}
 
 	return rsp, nil

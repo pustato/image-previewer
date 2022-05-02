@@ -19,11 +19,16 @@ import (
 	"github.com/pustato/image-previewer/internal/server"
 )
 
+const (
+	clientTimeout         = 1 * time.Second
+	serverShutdownTimeout = 3 * time.Second
+)
+
 var (
 	port      = flag.String("port", "8000", "service port")
 	cacheDir  = flag.String("cacheDir", "/tmp/cache", "directory to store cache")
 	cacheSize = flag.String("cacheSize", "10M", "directory to store cache")
-	logLevel  = flag.String("logLevel", "debug", "logging level")
+	logLevel  = flag.String("logLevel", "debug", "logging level (debug|info|warn|error)")
 )
 
 func main() {
@@ -38,7 +43,7 @@ func main() {
 		return
 	}
 
-	logg, err := logger.New(*logLevel)
+	logg, err := logger.NewZapLogger(*logLevel)
 	if err != nil {
 		fmt.Println("create logger: " + err.Error())
 		resultCode = 1
@@ -52,18 +57,18 @@ func main() {
 		return
 	}
 
-	clientInstance := client.New(time.Second)
-	resizerInstance := resizer.New()
+	clientInstance := client.New(clientTimeout)
+	resizerInstance := resizer.NewImageResizer()
 
-	appInstance := app.New(clientInstance, resizerInstance)
-	cachedApp, err := cache.New(appInstance, cacheSizeBytes, *cacheDir)
+	appInstance := app.NewResizerApp(clientInstance, resizerInstance)
+	cachedApp, err := cache.NewCacheAppDecorator(appInstance, cacheSizeBytes, *cacheDir)
 	if err != nil {
 		logg.Error("create cached app: " + err.Error())
 		resultCode = 1
 		return
 	}
 
-	srv := server.New(net.JoinHostPort("0.0.0.0", *port), cachedApp, logg)
+	srv := server.NewServer(net.JoinHostPort("0.0.0.0", *port), cachedApp, logg)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
@@ -72,7 +77,7 @@ func main() {
 		<-ctx.Done()
 		logg.Info("stopping server...")
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+		ctx, cancel := context.WithTimeout(context.Background(), serverShutdownTimeout)
 		defer cancel()
 
 		if err := srv.Stop(ctx); err != nil {
