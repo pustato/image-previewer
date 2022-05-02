@@ -55,7 +55,12 @@ func NewCacheAppDecorator(app app.App, limit uint64, cachePath string) (*AppCach
 	}, nil
 }
 
-func (a *AppCacheDecorator) GetAndResize(ctx context.Context, url string, w, h int, headers http.Header) ([]byte, error) {
+func (a *AppCacheDecorator) GetAndResize(
+	ctx context.Context,
+	url string,
+	w, h int,
+	headers http.Header,
+) ([]byte, error) {
 	key := a.generateKey(url, w, h)
 
 	item, found := a.cache.Get(key)

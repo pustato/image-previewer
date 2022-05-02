@@ -65,7 +65,7 @@ func parsePath(path string) (*request, error) {
 		return nil, fmt.Errorf("%s: %w", parts[pathPartsHeightIdx], ErrHeightIsNotANumber)
 	}
 
-	u, err := normalizeUrl("http://" + parts[pathPartsURLIdx])
+	u, err := normalizeURL("http://" + parts[pathPartsURLIdx])
 	if err != nil {
 		return nil, err
 	}
@@ -73,10 +73,10 @@ func parsePath(path string) (*request, error) {
 	return &request{w, h, u}, nil
 }
 
-func normalizeUrl(u string) (string, error) {
+func normalizeURL(u string) (string, error) {
 	uu, err := url.Parse(strings.ToLower(u))
 	if err != nil {
-		return "", fmt.Errorf("%s: %w: %s", u, ErrInvalidUrl, err.Error())
+		return "", fmt.Errorf("%s: %w: %s", u, ErrInvalidURL, err.Error())
 	}
 
 	uu.Fragment = ""
