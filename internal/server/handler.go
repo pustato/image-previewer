@@ -16,6 +16,7 @@ const (
 	pathPartsWidthIdx  = 1
 	pathPartsHeightIdx = 2
 	pathPartsURLIdx    = 3
+	badRequestText     = "bad request"
 )
 
 type Handler struct {
@@ -41,7 +42,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.log.Warn("get and resize: " + err.Error())
 		w.WriteHeader(http.StatusBadGateway)
-		_, _ = w.Write([]byte("bad request"))
+		_, _ = w.Write([]byte(badRequestText))
 		return
 	}
 

@@ -27,7 +27,7 @@ const (
 var (
 	port      = flag.String("port", "8000", "service port")
 	cacheDir  = flag.String("cacheDir", "/tmp/cache", "directory to store cache")
-	cacheSize = flag.String("cacheSize", "10M", "directory to store cache")
+	cacheSize = flag.String("cacheSize", "100M", "directory to store cache")
 	logLevel  = flag.String("logLevel", "debug", "logging level (debug|info|warn|error)")
 )
 
@@ -57,7 +57,7 @@ func main() {
 		return
 	}
 
-	clientInstance := client.New(clientTimeout)
+	clientInstance := client.NewHTTPClient(clientTimeout)
 	resizerInstance := resizer.NewImageResizer()
 
 	appInstance := app.NewResizerApp(clientInstance, resizerInstance)

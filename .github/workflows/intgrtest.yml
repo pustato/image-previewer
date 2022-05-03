@@ -1,0 +1,17 @@
+name: Integration testing
+
+on:
+  pull_request:
+
+jobs:
+  intgrtest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Integration test
+        run: make intgrtest
+
+      - name: Integration test
+        run: make intgrtest-clean
