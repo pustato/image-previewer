@@ -13,5 +13,5 @@ jobs:
       - name: Integration test
         run: make intgrtest
 
-      - name: Integration test
+      - name: Cleanup
         run: make intgrtest-clean
