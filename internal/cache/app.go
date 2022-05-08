@@ -10,46 +10,28 @@ import (
 	"strconv"
 
 	"github.com/pustato/image-previewer/internal/app"
+	"github.com/pustato/image-previewer/internal/cache/filesystem"
+	"github.com/pustato/image-previewer/internal/cache/lru"
 )
 
 var _ app.App = (*AppCacheDecorator)(nil)
 
-type Item struct {
-	key      string
-	FileName string
-	Size     uint64
-}
-
-type RemoveItemCallback func(item *Item)
-
-type Cache interface {
-	Get(key string) (*Item, bool)
-	Set(key string, item *Item) bool
-	Remove(key string)
-}
-
-type Filesystem interface {
-	WriteFile(name string, content []byte) error
-	ReadFile(name string) ([]byte, error)
-	RemoveFile(name string) error
-}
-
 type AppCacheDecorator struct {
 	app   app.App
-	cache Cache
-	fs    Filesystem
+	cache lru.Cache
+	fs    filesystem.Filesystem
 }
 
 func NewCacheAppDecorator(app app.App, limit uint64, cachePath string) (*AppCacheDecorator, error) {
-	fs, err := NewFilesystem(cachePath)
+	fs, err := filesystem.NewDiskFilesystem(cachePath)
 	if err != nil {
 		return nil, fmt.Errorf("new cached app: %w", err)
 	}
 
 	return &AppCacheDecorator{
 		app: app,
-		cache: NewCache(limit, func(item *Item) {
-			_ = fs.RemoveFile(item.FileName) // log ? todo
+		cache: lru.NewCache(limit, func(item *lru.Item) {
+			_ = fs.RemoveFile(item.FileName)
 		}),
 		fs: fs,
 	}, nil
@@ -78,7 +60,7 @@ func (a *AppCacheDecorator) GetAndResize(
 		return nil, fmt.Errorf("cached app proxy call: %w", err)
 	}
 
-	item = &Item{
+	item = &lru.Item{
 		FileName: key + ".jpg",
 		Size:     uint64(len(content)),
 	}

@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-
-	"github.com/disintegration/imaging"
 )
 
 var _ Resizer = (*ImageResizer)(nil)
@@ -24,8 +22,10 @@ type ImageResizer struct {
 	processor ImageProcessor
 }
 
-func (r *ImageResizer) WithProcessor(processor ImageProcessor) {
+func (r *ImageResizer) WithProcessor(processor ImageProcessor) *ImageResizer {
 	r.processor = processor
+
+	return r
 }
 
 func (r *ImageResizer) Resize(reader io.Reader, w, h int) ([]byte, error) {
@@ -51,10 +51,10 @@ func (r *ImageResizer) Resize(reader io.Reader, w, h int) ([]byte, error) {
 		img = r.processor.Crop(img, cropW, cropH)
 	}
 
-	img = imaging.Resize(img, w, h, imaging.Lanczos)
+	img = r.processor.Resize(img, w, h)
 
 	buff := new(bytes.Buffer)
-	if err := imaging.Encode(buff, img, imaging.JPEG, imaging.JPEGQuality(80)); err != nil {
+	if err := r.processor.Encode(img, buff); err != nil {
 		return nil, fmt.Errorf("ImageResizer encode: %w", err)
 	}
 

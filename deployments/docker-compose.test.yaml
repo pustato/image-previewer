@@ -1,5 +1,12 @@
 version: "3.3"
 
+networks:
+  previewer-network:
+    driver: bridge
+
+volumes:
+  cache:
+
 services:
   nginx:
     build:
@@ -11,3 +18,30 @@ services:
       - previewer-network
     volumes:
       - ./../test/data:/static:ro
+
+  previewer:
+    build:
+      context: ./../
+      dockerfile: ./build/Dockerfile
+    networks:
+      - previewer-network
+    volumes:
+      - cache:/tmp/cache
+    command: -port 8000 -cacheDir=/tmp/cache -cacheSize=100k
+
+  intgrtest:
+    build:
+      context: ./../
+      dockerfile: ./build/intgrtest.Dockerfile
+    networks:
+      - previewer-network
+    environment:
+      - HTTP_HOST=previewer
+      - HTTP_PORT=8000
+      - CACHE_DIR=/tmp/cache
+      - CACHE_SIZE=100k
+      - STATIC_HOST=nginx
+    volumes:
+      - cache:/tmp/cache
+    depends_on:
+      - previewer
