@@ -9,6 +9,12 @@ import (
 
 var _ Client = (*HTTPClient)(nil)
 
+type RoundTripperFunc func(*http.Request) (*http.Response, error)
+
+func (fn RoundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return fn(req)
+}
+
 type Client interface {
 	GetWithHeaders(ctx context.Context, url string, headers http.Header) (*http.Response, error)
 }
@@ -17,12 +23,18 @@ type HTTPClient struct {
 	client *http.Client
 }
 
-func New(timeout time.Duration) *HTTPClient {
+func NewHTTPClient(timeout time.Duration) *HTTPClient {
 	return &HTTPClient{
 		client: &http.Client{
 			Timeout: timeout,
 		},
 	}
+}
+
+func (c *HTTPClient) WithRoundTripFunc(f RoundTripperFunc) *HTTPClient {
+	c.client.Transport = f
+
+	return c
 }
 
 func (c *HTTPClient) GetWithHeaders(ctx context.Context, url string, headers http.Header) (*http.Response, error) {

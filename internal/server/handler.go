@@ -3,10 +3,10 @@ package server
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 
+	"github.com/goware/urlx"
 	"github.com/pustato/image-previewer/internal/app"
 	"github.com/pustato/image-previewer/internal/logger"
 )
@@ -16,6 +16,7 @@ const (
 	pathPartsWidthIdx  = 1
 	pathPartsHeightIdx = 2
 	pathPartsURLIdx    = 3
+	badRequestText     = "bad request"
 )
 
 type Handler struct {
@@ -41,7 +42,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.log.Warn("get and resize: " + err.Error())
 		w.WriteHeader(http.StatusBadGateway)
-		_, _ = w.Write([]byte("bad request"))
+		_, _ = w.Write([]byte(badRequestText))
 		return
 	}
 
@@ -74,12 +75,17 @@ func parsePath(path string) (*request, error) {
 }
 
 func normalizeURL(u string) (string, error) {
-	uu, err := url.Parse(strings.ToLower(u))
+	uu, err := urlx.Parse(strings.ToLower(u))
 	if err != nil {
-		return "", fmt.Errorf("%s: %w: %s", u, ErrInvalidURL, err.Error())
+		return "", fmt.Errorf("parse url %s: %w: %s", u, ErrInvalidURL, err.Error())
 	}
 
 	uu.Fragment = ""
 
-	return uu.String(), nil
+	normalURL, err := urlx.Normalize(uu)
+	if err != nil {
+		return "", fmt.Errorf("normalize url %s: %w: %s", u, ErrInvalidURL, err.Error())
+	}
+
+	return normalURL, nil
 }

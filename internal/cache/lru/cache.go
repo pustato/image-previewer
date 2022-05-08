@@ -1,13 +1,26 @@
-package cache
+package lru
 
 import (
 	"container/list"
 	"sync"
 )
 
-var _ Cache = (*cache)(nil)
+var _ Cache = (*CacheLRU)(nil)
 
-type cache struct {
+type Cache interface {
+	Get(key string) (*Item, bool)
+	Set(key string, item *Item) bool
+}
+
+type Item struct {
+	key      string
+	FileName string
+	Size     uint64
+}
+
+type RemoveItemCallback func(item *Item)
+
+type CacheLRU struct {
 	mu           sync.RWMutex
 	list         *list.List
 	items        map[string]*list.Element
@@ -16,8 +29,8 @@ type cache struct {
 	onRemoveFunc RemoveItemCallback
 }
 
-func NewCache(limit uint64, onRemove RemoveItemCallback) Cache {
-	return &cache{
+func NewCache(limit uint64, onRemove RemoveItemCallback) *CacheLRU {
+	return &CacheLRU{
 		list:         list.New(),
 		items:        make(map[string]*list.Element),
 		limit:        limit,
@@ -25,7 +38,7 @@ func NewCache(limit uint64, onRemove RemoveItemCallback) Cache {
 	}
 }
 
-func (c *cache) Get(key string) (*Item, bool) {
+func (c *CacheLRU) Get(key string) (*Item, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -39,7 +52,7 @@ func (c *cache) Get(key string) (*Item, bool) {
 	return element.Value.(*Item), true
 }
 
-func (c *cache) Set(key string, item *Item) bool {
+func (c *CacheLRU) Set(key string, item *Item) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -61,14 +74,7 @@ func (c *cache) Set(key string, item *Item) bool {
 	return false
 }
 
-func (c *cache) Remove(key string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	c.remove(key)
-}
-
-func (c *cache) remove(key string) {
+func (c *CacheLRU) remove(key string) {
 	element, ok := c.items[key]
 	if !ok {
 		return
@@ -82,8 +88,8 @@ func (c *cache) remove(key string) {
 	c.onRemoveFunc(item)
 }
 
-func (c *cache) gc() {
-	for c.size >= c.limit {
+func (c *CacheLRU) gc() {
+	for c.size > c.limit {
 		element := c.list.Back()
 		item := element.Value.(*Item)
 		c.remove(item.key)

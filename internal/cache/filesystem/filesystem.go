@@ -1,4 +1,4 @@
-package cache
+package filesystem
 
 import (
 	"errors"
@@ -7,27 +7,33 @@ import (
 	"path/filepath"
 )
 
-var _ Filesystem = (*filesystem)(nil)
+var _ Filesystem = (*DiscFilesystem)(nil)
 
 var ErrFileNotExists = errors.New("file is not exists")
 
 const filePermission = 0o700
 
-type filesystem struct {
+type Filesystem interface {
+	WriteFile(name string, content []byte) error
+	ReadFile(name string) ([]byte, error)
+	RemoveFile(name string) error
+}
+
+type DiscFilesystem struct {
 	basePath string
 }
 
-func NewFilesystem(basePath string) (Filesystem, error) {
+func NewDiskFilesystem(basePath string) (*DiscFilesystem, error) {
 	if err := ensureDir(basePath); err != nil {
 		return nil, fmt.Errorf("new filesystem: %w", err)
 	}
 
-	return &filesystem{
+	return &DiscFilesystem{
 		basePath: basePath,
 	}, nil
 }
 
-func (f *filesystem) WriteFile(name string, content []byte) error {
+func (f *DiscFilesystem) WriteFile(name string, content []byte) error {
 	path := filepath.Join(f.basePath, name)
 
 	if err := os.WriteFile(path, content, filePermission); err != nil {
@@ -37,7 +43,7 @@ func (f *filesystem) WriteFile(name string, content []byte) error {
 	return nil
 }
 
-func (f *filesystem) ReadFile(name string) ([]byte, error) {
+func (f *DiscFilesystem) ReadFile(name string) ([]byte, error) {
 	path := filepath.Join(f.basePath, name)
 
 	content, err := os.ReadFile(path)
@@ -52,7 +58,7 @@ func (f *filesystem) ReadFile(name string) ([]byte, error) {
 	return content, nil
 }
 
-func (f *filesystem) RemoveFile(name string) error {
+func (f *DiscFilesystem) RemoveFile(name string) error {
 	path := filepath.Join(f.basePath, name)
 
 	if err := os.Remove(path); err != nil {

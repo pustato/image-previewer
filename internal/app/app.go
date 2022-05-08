@@ -10,6 +10,8 @@ import (
 	"github.com/pustato/image-previewer/internal/resizer"
 )
 
+var ErrRequestError = errors.New("request error")
+
 type App interface {
 	GetAndResize(ctx context.Context, url string, w, h int, headers http.Header) ([]byte, error)
 }
@@ -24,18 +26,14 @@ type ResizerApp struct {
 }
 
 func (a *ResizerApp) GetAndResize(ctx context.Context, url string, w, h int, headers http.Header) ([]byte, error) {
-	var err error
-
 	rsp, err := a.client.GetWithHeaders(ctx, url, headers)
 	if err != nil {
 		return nil, fmt.Errorf("ResizerApp get %s: %w", url, err)
 	}
-	defer func() {
-		err = rsp.Body.Close()
-	}()
+	defer rsp.Body.Close()
 
 	if rsp.StatusCode != http.StatusOK {
-		return nil, errors.New("not ok") // todo
+		return nil, ErrRequestError
 	}
 
 	result, err := a.resizer.Resize(rsp.Body, w, h)
