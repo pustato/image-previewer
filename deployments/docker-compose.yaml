@@ -1,0 +1,16 @@
+version: "3.3"
+
+networks:
+  previewer-network:
+    driver: bridge
+
+services:
+  previewer:
+    image: previewer:develop
+    ports:
+      - '${HTTP_PORT}:${HTTP_PORT}'
+    networks:
+      - previewer-network
+    tmpfs:
+      - /tmp/cache
+    command: -port ${HTTP_PORT}
