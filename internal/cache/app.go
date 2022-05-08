@@ -23,7 +23,7 @@ type AppCacheDecorator struct {
 }
 
 func NewCacheAppDecorator(app app.App, limit uint64, cachePath string) (*AppCacheDecorator, error) {
-	fs, err := filesystem.NewDiscFilesystem(cachePath)
+	fs, err := filesystem.NewDiskFilesystem(cachePath)
 	if err != nil {
 		return nil, fmt.Errorf("new cached app: %w", err)
 	}

@@ -10,7 +10,7 @@ git clone git@github.com:pustato/image-previewer.git
 ```bash
 make build
 ```
-На выходе получаем бинрный файл `bin/previever`
+На выходе получаем бинарный файл `bin/previewer`
 
 ## Запуск
 ```bash

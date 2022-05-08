@@ -24,46 +24,64 @@ func TestHandler_ServeHTTP_Success(t *testing.T) {
 		w, h int
 	}{
 		{
-			httptest.NewRequest(http.MethodGet, "http://x/100/200/www.google.com/image.jpg", nil),
-			"http://www.google.com/image.jpg",
+			httptest.NewRequest(http.MethodGet, "http://x/100/200/www.example.com/image.jpg", nil),
+			"http://www.example.com/image.jpg",
 			100, 200,
 		},
 		{
-			httptest.NewRequest(http.MethodGet, "http://x/1/1/www.google.com/image.jpg?param=not_encoded", nil),
-			"http://www.google.com/image.jpg",
+			httptest.NewRequest(http.MethodGet, "http://x/1/1/www.example.com/image.jpg?param=not_encoded", nil),
+			"http://www.example.com/image.jpg",
 			1, 1,
 		},
 		{
-			httptest.NewRequest(http.MethodGet, "http://x/1/1/www.google.com/image.jpg?#fragment_not_encoded", nil),
-			"http://www.google.com/image.jpg",
+			httptest.NewRequest(http.MethodGet, "http://x/1/1/www.example.com/image.jpg?#fragment_not_encoded", nil),
+			"http://www.example.com/image.jpg",
 			1, 1,
 		},
 		{
-			httptest.NewRequest(http.MethodGet, "http://x/1024/768/www.GooGle.com/Image.JPG", nil),
-			"http://www.google.com/image.jpg",
+			httptest.NewRequest(http.MethodGet, "http://x/1024/768/www.example.com/Image.JPG", nil),
+			"http://www.example.com/image.jpg",
 			1024, 768,
 		},
 		{
-			httptest.NewRequest(http.MethodGet, "http://x/12/14/www.GooGle.com/Image.JPG%3Fv%3D1", nil),
-			"http://www.google.com/image.jpg?v=1",
+			httptest.NewRequest(http.MethodGet, "http://x/12/14/www.example.com/Image.JPG%3Fv%3D1", nil),
+			"http://www.example.com/image.jpg?v=1",
 			12, 14,
 		},
 		{
-			httptest.NewRequest(http.MethodGet, "http://x/1/1/www.GooGle.com/Image.JPG%3Fv%3D1%23fragment", nil),
-			"http://www.google.com/image.jpg?v=1",
+			httptest.NewRequest(
+				http.MethodGet,
+				"http://x/12/14/www.example.com/Image.jpg%3Fa_order%3Dfirst%26b_order%3Dsecond",
+				nil,
+			),
+			"http://www.example.com/image.jpg?a_order=first&b_order=second",
+			12, 14,
+		},
+		{
+			httptest.NewRequest(
+				http.MethodGet,
+				"http://x/12/14/www.example.com/Image.jpg%3Fb_order%3Dsecond%26a_order%3Dfirst",
+				nil,
+			),
+			"http://www.example.com/image.jpg?a_order=first&b_order=second",
+			12, 14,
+		},
+		{
+			httptest.NewRequest(http.MethodGet, "http://x/1/1/www.example.com/Image.JPG%3Fv%3D1%23fragment", nil),
+			"http://www.example.com/image.jpg?v=1",
 			1, 1,
 		},
 
 		{
 			func() *http.Request {
-				rq := httptest.NewRequest(http.MethodGet, "http://x/1/1/www.GooGle.com%2FImage.JPG%3Fv%3D1%23fragment", nil)
+				rq := httptest.NewRequest(http.MethodGet, "http://x/1/1/www.example.com%2FImage.JPG%3Fv%3D1%23fragment", nil)
 
 				rq.Header.Add("key", "value")
 				rq.Header.Add("key2", "value2")
 
 				return rq
 			}(),
-			"http://www.google.com/image.jpg?v=1",
+			"http://www.example.com/image.jpg?v=1",
 			1, 1,
 		},
 	}
@@ -151,7 +169,7 @@ func TestHandler_ServeHTTP_PathErrors(t *testing.T) {
 }
 
 func TestHandler_ServeHTTP_AppError(t *testing.T) {
-	rq := httptest.NewRequest(http.MethodGet, "http://x/10/11/www.google.com/image.jpg", nil)
+	rq := httptest.NewRequest(http.MethodGet, "http://x/10/11/www.example.com/image.jpg", nil)
 	w := httptest.NewRecorder()
 	testError := errors.New("some app error")
 
@@ -162,7 +180,7 @@ func TestHandler_ServeHTTP_AppError(t *testing.T) {
 
 	app := &mockapp.App{}
 	app.
-		On("GetAndResize", rq.Context(), "http://www.google.com/image.jpg", 10, 11, rq.Header).
+		On("GetAndResize", rq.Context(), "http://www.example.com/image.jpg", 10, 11, rq.Header).
 		Once().
 		Return(nil, testError)
 

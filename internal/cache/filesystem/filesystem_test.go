@@ -8,14 +8,17 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-const basePath = "/tmp/test"
-
 type FilesystemTestSuite struct {
 	suite.Suite
 	basePath string
 }
 
 func (ts *FilesystemTestSuite) SetupTest() {
+	basePath, err := os.MkdirTemp("", "previewer-*")
+	if err != nil {
+		ts.T().Error(err.Error())
+	}
+
 	ts.basePath = basePath
 }
 
@@ -25,12 +28,12 @@ func (ts *FilesystemTestSuite) TearDownTest() {
 
 func (ts *FilesystemTestSuite) TestConstructor() {
 	ts.T().Run("error", func(t *testing.T) {
-		_, err := NewDiscFilesystem("/dev/not_exists_and_not_writable")
+		_, err := NewDiskFilesystem("/dev/not_exists_and_not_writable")
 		require.Error(ts.T(), err)
 	})
 
 	ts.T().Run("success", func(t *testing.T) {
-		_, err := NewDiscFilesystem(ts.basePath)
+		_, err := NewDiskFilesystem(ts.basePath)
 		require.NoError(ts.T(), err)
 
 		_, err = os.Stat(ts.basePath)
@@ -39,7 +42,7 @@ func (ts *FilesystemTestSuite) TestConstructor() {
 }
 
 func (ts *FilesystemTestSuite) TestComplex() {
-	fs, _ := NewDiscFilesystem(ts.basePath)
+	fs, _ := NewDiskFilesystem(ts.basePath)
 	name := "file.txt"
 	content := []byte("content")
 

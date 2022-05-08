@@ -23,7 +23,7 @@ type DiscFilesystem struct {
 	basePath string
 }
 
-func NewDiscFilesystem(basePath string) (*DiscFilesystem, error) {
+func NewDiskFilesystem(basePath string) (*DiscFilesystem, error) {
 	if err := ensureDir(basePath); err != nil {
 		return nil, fmt.Errorf("new filesystem: %w", err)
 	}
